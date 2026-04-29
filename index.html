@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSE 373 — City Routing System</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    background: #0a0a1a;
+    min-height: 100vh;
+    padding: 2rem;
+    color: #e0e0ff;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed; top: -300px; left: -300px;
+    width: 700px; height: 700px;
+    background: radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed; bottom: -300px; right: -300px;
+    width: 700px; height: 700px;
+    background: radial-gradient(circle, rgba(236,72,153,0.15) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+  .container { position: relative; z-index: 1; max-width: 860px; margin: 0 auto; }
+
+  /* Header */
+  .header { display: flex; align-items: center; gap: 16px; margin-bottom: 2rem; }
+  .logo {
+    width: 56px; height: 56px;
+    background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px; color: #fff; text-align: center; line-height: 1.3;
+    box-shadow: 0 0 30px rgba(99,102,241,0.5), 0 0 60px rgba(236,72,153,0.2);
+  }
+  h1 { font-size: 28px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
+  .sub { font-size: 13px; color: #7070aa; margin-top: 3px; }
+
+  /* Cards */
+  .card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 18px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    backdrop-filter: blur(20px);
+  }
+  .section-title {
+    font-size: 14px; font-weight: 600;
+    color: #a78bfa; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 10px;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .section-title::before {
+    content: ''; display: inline-block; width: 4px; height: 18px;
+    background: linear-gradient(180deg, #6366f1, #ec4899);
+    border-radius: 2px; flex-shrink: 0;
+  }
+
+  /* Form */
+  label { font-size: 11px; color: #7070aa; display: block; margin-bottom: 6px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+  select, input[type="number"] {
+    width: 100%; margin-bottom: 14px;
+    padding: 11px 14px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    font-size: 14px; color: #e0e0ff; outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    appearance: auto;
+  }
+  select:focus, input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.2);
+    background: rgba(99,102,241,0.08);
+  }
+  select option { background: #1a1a3e; color: #e0e0ff; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+  /* Button */
+  button {
+    width: 100%; padding: 13px;
+    font-size: 14px; font-weight: 700;
+    cursor: pointer; border-radius: 12px; border: none;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+    color: #fff;
+    transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 25px rgba(99,102,241,0.45);
+  }
+  button:hover { opacity: 0.92; transform: translateY(-2px); box-shadow: 0 8px 30px rgba(99,102,241,0.55); }
+  button:active { transform: translateY(0); }
+
+  /* Stats */
+  .stat {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px; padding: 18px; text-align: center;
+  }
+  .stat-val { font-size: 28px; font-weight: 700; }
+  .stat-lbl { font-size: 11px; color: #7070aa; margin-top: 5px; text-transform: uppercase; letter-spacing: 1px; }
+  #rDist { color: #34d399; text-shadow: 0 0 20px rgba(52,211,153,0.5); }
+  #rTime { color: #60a5fa; text-shadow: 0 0 20px rgba(96,165,250,0.5); }
+  #rCost { color: #f472b6; text-shadow: 0 0 20px rgba(244,114,182,0.5); }
+
+  /* Badges */
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .bus   { background: rgba(59,130,246,0.2); color: #93c5fd; border: 1px solid rgba(59,130,246,0.35); }
+  .metro { background: rgba(139,92,246,0.2); color: #c4b5fd; border: 1px solid rgba(139,92,246,0.35); }
+  .walk  { background: rgba(52,211,153,0.15); color: #6ee7b7; border: 1px solid rgba(52,211,153,0.35); }
+  .node-tag { background: rgba(255,255,255,0.07); color: #e0e0ff; border: 1px solid rgba(255,255,255,0.12); font-size: 13px; padding: 4px 12px; border-radius: 20px; }
+
+  /* Route box */
+  .route-box {
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px; padding: 1.2rem;
+    font-size: 14px; line-height: 2.6; word-break: break-word;
+  }
+  .arrow { color: #6366f1; font-size: 18px; vertical-align: middle; }
+
+  .exec { font-size: 12px; color: #6366f1; margin-top: 12px; font-weight: 600; letter-spacing: 0.5px; }
+
+  /* Error */
+  .error {
+    display: none; color: #fca5a5; font-size: 13px; margin-top: 10px;
+    background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25);
+    padding: 10px 14px; border-radius: 10px;
+  }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 10px; margin-bottom: 1.5rem; }
+  .tab {
+    padding: 9px 22px; border-radius: 30px; font-size: 13px; font-weight: 600;
+    cursor: pointer;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #7070aa; transition: all 0.2s;
+  }
+  .tab:hover { color: #e0e0ff; border-color: rgba(99,102,241,0.4); }
+  .tab.active {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border-color: transparent; color: #fff;
+    box-shadow: 0 4px 20px rgba(99,102,241,0.45);
+  }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th {
+    text-align: left; padding: 12px 14px;
+    background: rgba(99,102,241,0.12);
+    color: #a78bfa; font-weight: 600; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  th:first-child { border-radius: 10px 0 0 10px; }
+  th:last-child  { border-radius: 0 10px 10px 0; }
+  td { padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.04); color: #e0e0ff; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.03); }
+  .no-path { color: #f87171; font-style: italic; }
+
+  /* Map */
+  .map-node { margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .map-node:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .map-node-name {
+    font-size: 14px; font-weight: 700; color: #c4b5fd;
+    margin-bottom: 10px; display: flex; align-items: center; gap: 10px;
+  }
+  .map-dot {
+    width: 10px; height: 10px;
+    background: linear-gradient(135deg, #6366f1, #ec4899);
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(99,102,241,0.8);
+    flex-shrink: 0;
+  }
+  .map-edges { display: flex; flex-wrap: wrap; gap: 8px; }
+  .edge-pill {
+    font-size: 12px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 6px 12px; border-radius: 20px; color: #b0b0d0;
+  }
+
+  /* Custom weights */
+  #weights {
+    background: rgba(99,102,241,0.07);
+    border: 1px solid rgba(99,102,241,0.25);
+    border-radius: 12px; padding: 14px; margin-bottom: 14px; display: none;
+  }
+
+  .result { display: none; }
+
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(99,102,241,0.4), rgba(236,72,153,0.4), transparent);
+    margin: 16px 0;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="logo">CSE<br>373</div>
+    <div>
+      <h1>City Routing System</h1>
+      <p class="sub">Adaptive Multi-Constraint Routing &nbsp;·&nbsp; Dijkstra's Algorithm &nbsp;·&nbsp; Spring 2026</p>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('route')">🗺️ Find Route</div>
+    <div class="tab" onclick="switchTab('compare')">⚡ Compare Modes</div>
+    <div class="tab" onclick="switchTab('map')">🏙️ City Map</div>
+  </div>
+
+  <!-- FIND ROUTE -->
+  <div id="panel-route" class="panel active">
+    <div class="card">
+      <div class="section-title">Route Query</div>
+      <div class="grid2">
+        <div><label>Source Location</label><select id="src"></select></div>
+        <div><label>Destination</label><select id="dst"></select></div>
+      </div>
+      <div class="grid2">
+        <div>
+          <label>Avoid Transport</label>
+          <select id="avoidT">
+            <option value="">None</option>
+            <option value="bus">🚌 Bus</option>
+            <option value="metro">🚇 Metro</option>
+            <option value="walk">🚶 Walk</option>
+          </select>
+        </div>
+        <div><label>Avoid Node</label><select id="avoidN"><option value="">None</option></select></div>
+      </div>
+      <div>
+        <label>Routing Mode</label>
+        <select id="mode" onchange="toggleWeights()">
+          <option value="0">📏 Shortest Distance</option>
+          <option value="1">⏱️ Fastest Time</option>
+          <option value="2">💰 Cheapest Cost</option>
+          <option value="3">⚙️ Custom Weights</option>
+        </select>
+      </div>
+      <div id="weights">
+        <label>Weights — Distance / Time / Cost</label>
+        <div class="grid3">
+          <input type="number" id="w1" value="1" step="0.1" placeholder="Distance">
+          <input type="number" id="w2" value="1" step="0.1" placeholder="Time">
+          <input type="number" id="w3" value="1" step="0.1" placeholder="Cost">
+        </div>
+      </div>
+      <button onclick="findRoute()">✦ Find Optimal Route</button>
+      <div class="error" id="err">⚠️ No path found between selected locations!</div>
+    </div>
+
+    <div class="result card" id="routeResult">
+      <div class="section-title">Optimal Route</div>
+      <div class="route-box" id="routePath"></div>
+      <div class="divider"></div>
+      <div class="grid3" style="margin-top:4px">
+        <div class="stat"><div class="stat-val" id="rDist">-</div><div class="stat-lbl">Distance (km)</div></div>
+        <div class="stat"><div class="stat-val" id="rTime">-</div><div class="stat-lbl">Time (min)</div></div>
+        <div class="stat"><div class="stat-val" id="rCost">-</div><div class="stat-lbl">Cost (taka)</div></div>
+      </div>
+      <div class="exec" id="execTime"></div>
+    </div>
+  </div>
+
+  <!-- COMPARE -->
+  <div id="panel-compare" class="panel">
+    <div class="card">
+      <div class="section-title">Performance Comparison</div>
+      <div class="grid2">
+        <div><label>Source</label><select id="cSrc"></select></div>
+        <div><label>Destination</label><select id="cDst"></select></div>
+      </div>
+      <button onclick="compareAll()">⚡ Run Comparison</button>
+    </div>
+    <div id="compareResult" style="display:none" class="card">
+      <div class="section-title">Comparison Table</div>
+      <table>
+        <thead><tr><th>Mode</th><th>Distance (km)</th><th>Time (min)</th><th>Cost (taka)</th><th>Exec (ms)</th></tr></thead>
+        <tbody id="compareBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MAP -->
+  <div id="panel-map" class="panel">
+    <div class="card">
+      <div class="section-title">City Graph — Adjacency List</div>
+      <div id="mapContent"></div>
+    </div>
+  </div>
+
+</div>
+<script>
+const graph={
+  Mirpur:    [{to:"Dhanmondi",t:"bus",d:5.2,m:20,c:15},{to:"Uttara",t:"metro",d:8,m:25,c:30}],
+  Dhanmondi: [{to:"Mirpur",t:"bus",d:5.2,m:20,c:15},{to:"Shahbag",t:"walk",d:1.5,m:18,c:0},{to:"Motijheel",t:"bus",d:6,m:30,c:20}],
+  Shahbag:   [{to:"Dhanmondi",t:"walk",d:1.5,m:18,c:0},{to:"Motijheel",t:"bus",d:3,m:15,c:10},{to:"Farmgate",t:"walk",d:2,m:22,c:0}],
+  Motijheel: [{to:"Dhanmondi",t:"bus",d:6,m:30,c:20},{to:"Shahbag",t:"bus",d:3,m:15,c:10},{to:"Sadarghat",t:"bus",d:2.5,m:20,c:8}],
+  Uttara:    [{to:"Mirpur",t:"metro",d:8,m:25,c:30},{to:"Airport",t:"metro",d:4,m:12,c:25},{to:"Farmgate",t:"metro",d:9,m:28,c:35}],
+  Airport:   [{to:"Uttara",t:"metro",d:4,m:12,c:25}],
+  Farmgate:  [{to:"Shahbag",t:"walk",d:2,m:22,c:0},{to:"Uttara",t:"metro",d:9,m:28,c:35},{to:"Sadarghat",t:"bus",d:5,m:35,c:18}],
+  Sadarghat: [{to:"Motijheel",t:"bus",d:2.5,m:20,c:8},{to:"Farmgate",t:"bus",d:5,m:35,c:18}]
+};
+const nodes=Object.keys(graph);
+
+function getW(e,mode,w1,w2,w3){
+  if(mode==0)return e.d;if(mode==1)return e.m;if(mode==2)return e.c;
+  return w1*e.d+w2*e.m+w3*e.c;
+}
+function dijkstra(src,dst,mode,avoidT,avoidN,w1,w2,w3){
+  const t0=performance.now(),dist={},prev={};
+  nodes.forEach(n=>dist[n]=Infinity);dist[src]=0;
+  const pq=[[0,src]];
+  while(pq.length){
+    pq.sort((a,b)=>a[0]-b[0]);
+    const[cd,cn]=pq.shift();
+    if(cd>dist[cn])continue;if(cn===dst)break;
+    for(const e of(graph[cn]||[])){
+      if(avoidT&&e.t===avoidT)continue;if(avoidN&&e.to===avoidN)continue;
+      const nd=dist[cn]+getW(e,mode,w1,w2,w3);
+      if(nd<dist[e.to]){dist[e.to]=nd;prev[e.to]={from:cn,edge:e};pq.push([nd,e.to]);}
+    }
+  }
+  const ms=(performance.now()-t0).toFixed(4);
+  if(dist[dst]===Infinity)return null;
+  const path=[];let cur=dst;
+  while(cur!==src){const p=prev[cur];path.unshift({node:cur,edge:p.edge});cur=p.from;}
+  path.unshift({node:src,edge:null});
+  let td=0,tm=0,tc=0;
+  path.forEach(p=>{if(p.edge){td+=p.edge.d;tm+=p.edge.m;tc+=p.edge.c;}});
+  return{path,td,tm,tc,ms};
+}
+function populate(){
+  ['src','dst','avoidN','cSrc','cDst'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    if(id==='avoidN')el.innerHTML='<option value="">None</option>';else el.innerHTML='';
+    nodes.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;el.appendChild(o);});
+  });
+  document.getElementById('dst').value='Motijheel';
+  document.getElementById('cDst').value='Sadarghat';
+  buildMap();
+}
+function badge(t){return`<span class="badge ${t}">${t}</span>`;}
+function findRoute(){
+  const src=document.getElementById('src').value,dst=document.getElementById('dst').value;
+  const avoidT=document.getElementById('avoidT').value,avoidN=document.getElementById('avoidN').value;
+  const mode=parseInt(document.getElementById('mode').value);
+  const w1=parseFloat(document.getElementById('w1').value)||1;
+  const w2=parseFloat(document.getElementById('w2').value)||1;
+  const w3=parseFloat(document.getElementById('w3').value)||1;
+  const r=dijkstra(src,dst,mode,avoidT,avoidN,w1,w2,w3);
+  const err=document.getElementById('err'),res=document.getElementById('routeResult');
+  if(!r){err.style.display='block';res.style.display='none';return;}
+  err.style.display='none';res.style.display='block';
+  let html='';
+  r.path.forEach((p,i)=>{
+    html+=`<span class="badge node-tag">${p.node}</span>`;
+    if(i<r.path.length-1)html+=` ${badge(r.path[i+1].edge.t)} <span class="arrow">→</span> `;
+  });
+  document.getElementById('routePath').innerHTML=html;
+  document.getElementById('rDist').textContent=r.td.toFixed(1);
+  document.getElementById('rTime').textContent=r.tm.toFixed(0);
+  document.getElementById('rCost').textContent=r.tc.toFixed(0);
+  document.getElementById('execTime').textContent='⚡ Execution time: '+r.ms+' ms';
+}
+function compareAll(){
+  const src=document.getElementById('cSrc').value,dst=document.getElementById('cDst').value;
+  const modeNames=['Shortest Distance','Fastest Time','Cheapest Cost'];
+  const colors=['#34d399','#60a5fa','#f472b6'];
+  let html='';
+  modeNames.forEach((name,m)=>{
+    const r=dijkstra(src,dst,m,'','',1,1,1);
+    if(r)html+=`<tr><td style="color:${colors[m]};font-weight:700">${name}</td><td>${r.td.toFixed(1)}</td><td>${r.tm.toFixed(0)}</td><td>${r.tc.toFixed(0)}</td><td style="color:#7070aa">${r.ms}</td></tr>`;
+    else html+=`<tr><td>${name}</td><td colspan="4" class="no-path">No path found</td></tr>`;
+  });
+  document.getElementById('compareBody').innerHTML=html;
+  document.getElementById('compareResult').style.display='block';
+}
+function buildMap(){
+  let html='';
+  Object.entries(graph).forEach(([node,edges])=>{
+    html+=`<div class="map-node"><div class="map-node-name"><div class="map-dot"></div>${node}</div><div class="map-edges">`;
+    edges.forEach(e=>{html+=`<span class="edge-pill">${e.to} ${badge(e.t)} ${e.d}km · ${e.m}min · ${e.c}tk</span>`;});
+    html+='</div></div>';
+  });
+  document.getElementById('mapContent').innerHTML=html;
+}
+function toggleWeights(){
+  document.getElementById('weights').style.display=document.getElementById('mode').value=='3'?'block':'none';
+}
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['route','compare','map'][i]===name));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+}
+populate();
+</script>
+</body>
+</html>

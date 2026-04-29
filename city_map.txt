@@ -1,0 +1,11 @@
+10
+Mirpur Dhanmondi bus 5.2 20 15
+Mirpur Uttara metro 8.0 25 30
+Dhanmondi Shahbag walk 1.5 18 0
+Dhanmondi Motijheel bus 6.0 30 20
+Shahbag Motijheel bus 3.0 15 10
+Uttara Airport metro 4.0 12 25
+Motijheel Sadarghat bus 2.5 20 8
+Shahbag Farmgate walk 2.0 22 0
+Farmgate Uttara metro 9.0 28 35
+Sadarghat Farmgate bus 5.0 35 18
